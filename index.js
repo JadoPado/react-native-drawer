@@ -1,12 +1,19 @@
 import React, { PropTypes, Component } from 'react'
-import { PanResponder, View, StyleSheet, Dimensions, InteractionManager } from 'react-native'
-
+import { PanResponder, View, StyleSheet, Dimensions, InteractionManager, I18nManager } from 'react-native'
 import tween from './tweener'
 
 let deviceScreen = Dimensions.get('window')
 const DOUBLE_TAP_INTERVAL = 500
 const TAP_DURATION = 250
 const propsWhomRequireUpdate = ['closedDrawerOffset', 'openDrawerOffset', 'type', 'styles']
+
+export function getRtlSide(side) {
+	if (I18nManager.isRTL) {
+		return side === 'left' ? 'right' : 'left'
+	}
+
+	return side
+}
 
 export default class Drawer extends Component {
 
@@ -235,7 +242,7 @@ export default class Drawer extends Component {
   };
 
   shouldOpenDrawer(dx) {
-    let hasActiveHeading = this._open ^ dx > 0 ^ this.props.side === 'right'
+    let hasActiveHeading = this._open ^ dx > 0 ^ this.props.side === getRtlSide('right')
     if (!hasActiveHeading) return this._open
     else return this._open ^ Math.abs(dx) > this.state.viewport.width * this.props.panThreshold
   }
@@ -244,7 +251,7 @@ export default class Drawer extends Component {
     this._panning = false
     this.shouldOpenDrawer(gestureState.dx) ? this.open() : this.close()
   };
-    
+
   onStartShouldSetPanResponderCapture = (e, gestureState) => {
     if (this.shouldCaptureGestures()) return this.processShouldSet(e, gestureState)
     return false
@@ -269,9 +276,9 @@ export default class Drawer extends Component {
     if (!this.props.acceptPan) return false
 
     //Do nothing if we are panning the wrong way
-    if (this._open ^ gestureState.dx < 0 ^ this.props.side === 'right') return false
+    if (this._open ^ gestureState.dx < 0 ^ this.props.side === getRtlSide('right')) return false
 
-    let dx = this.props.side === 'right' ? gestureState.dx * -1 : gestureState.dx
+    let dx = this.props.side === getRtlSide('right') ? gestureState.dx * -1 : gestureState.dx
     let left = this._prevLeft + dx
     left = Math.min(left, this.getOpenLeft())
     left = Math.max(left, this.getClosedLeft())
@@ -311,7 +318,7 @@ export default class Drawer extends Component {
     let swipeToLeft = (gestureState.dx < 0) ? true : false
     let swipeToRight = (gestureState.dx > 0) ? true : false
     let swipeUpDown = (Math.abs(gestureState.dy) >= Math.abs(gestureState.dx)) ? true : false
-    let swipeInCloseDirection = (this.props.side === 'left') ? swipeToLeft : swipeToRight
+    let swipeInCloseDirection = (this.props.side === getRtlSide('left')) ? swipeToLeft : swipeToRight
     if (swipeUpDown || (this._open && !swipeInCloseDirection) || (!this._open && swipeInCloseDirection)) {
       return false
     }
@@ -354,8 +361,8 @@ export default class Drawer extends Component {
     if (this._childDrawer && this._childDrawer._open) return false
 
     let x0 = e.nativeEvent.pageX
-    let deltaOpen = this.props.side === 'left' ? this.state.viewport.width - x0 : x0
-    let deltaClose = this.props.side === 'left' ? x0 : this.state.viewport.width - x0
+    let deltaOpen = this.props.side === getRtlSide('left') ? this.state.viewport.width - x0 : x0
+    let deltaClose = this.props.side === getRtlSide('left') ? x0 : this.state.viewport.width - x0
 
     if ( this._open && deltaOpen > this.getOpenMask() ) return false
     if ( !this._open && deltaClose > this.getClosedMask() ) return false
@@ -398,7 +405,7 @@ export default class Drawer extends Component {
         if(typeof type === 'function') {
           type() // this is actually a callback
         } else cb && cb()
-        
+
       }
     })
   };
